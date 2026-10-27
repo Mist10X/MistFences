@@ -1,0 +1,47 @@
+﻿[
+    {
+        "test":  "free icons sit on Explorer\u0027s grid",
+        "passed":  true,
+        "detail":  "cell 75x103, origin 0,5; 11 icons"
+    },
+    {
+        "test":  "drag a file into a free folder moves it",
+        "passed":  true,
+        "detail":  "in folder: True, still on desktop: False"
+    },
+    {
+        "test":  "Ctrl+drag copies into the folder",
+        "passed":  true,
+        "detail":  "copy in folder: True, original kept: True"
+    },
+    {
+        "test":  "drop on a folder shortcut goes into its folder",
+        "passed":  true,
+        "detail":  "in target: True"
+    },
+    {
+        "test":  "drop on the Recycle Bin recycles",
+        "passed":  true,
+        "detail":  "gone from desktop, in the bin: True"
+    },
+    {
+        "test":  "name conflict: Windows dialog, nothing lost on cancel",
+        "passed":  true,
+        "detail":  "dialogs: OperationStatusWindow:Замена или пропуск файлов; both files intact: True"
+    },
+    {
+        "test":  "access denied: reported, file stays",
+        "passed":  true,
+        "detail":  "dialogs: OperationStatusWindow:Нет доступа к целевой папке; stayed: True"
+    },
+    {
+        "test":  "drag from Explorer into a free folder",
+        "passed":  true,
+        "detail":  "in folder: True"
+    },
+    {
+        "test":  "moving an icon on the desktop touches no file",
+        "passed":  true,
+        "detail":  "moved to 150,726,225,829, files same: True"
+    }
+]

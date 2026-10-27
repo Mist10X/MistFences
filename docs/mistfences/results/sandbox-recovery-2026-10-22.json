@@ -1,0 +1,62 @@
+﻿[
+    {
+        "test":  "baseline",
+        "passed":  true,
+        "detail":  "icons visible=True, check-fences exit 0, no startup entry"
+    },
+    {
+        "test":  "full mode hides the Windows icons",
+        "passed":  true,
+        "detail":  "ready 494 ms, hidden after 1 ms, marker=True, watchdogs=1, fences=4, items=4"
+    },
+    {
+        "test":  "second start exits",
+        "passed":  true,
+        "detail":  "second instance exited after 200 ms; running: 1"
+    },
+    {
+        "test":  "quit restores the icons",
+        "passed":  true,
+        "detail":  "exited after 240 ms, icons back after 1 ms, marker gone=True, watchdog gone after 2 ms"
+    },
+    {
+        "test":  "crash: watchdog restores the icons",
+        "passed":  true,
+        "detail":  "icons back 410 ms after the kill, marker gone=True"
+    },
+    {
+        "test":  "Explorer restart",
+        "passed":  true,
+        "detail":  "explorer back after 4 ms; MistFences same pid=True, fences 4-\u003e4, icons still hidden=True"
+    },
+    {
+        "test":  "quit after Explorer restart restores",
+        "passed":  true,
+        "detail":  "icons back after 2 ms"
+    },
+    {
+        "test":  "icons hidden by the user stay hidden",
+        "passed":  true,
+        "detail":  "hidden by the user=True, no marker while running=True, still hidden after quit=True"
+    },
+    {
+        "test":  "crash loop: safe start keeps the icons",
+        "passed":  true,
+        "detail":  "3 crashes restored by the watchdog: 3; 4th start ready=True, icons visible=True"
+    },
+    {
+        "test":  "after a clean exit the next start is normal",
+        "passed":  true,
+        "detail":  "hidden again after 2 ms"
+    },
+    {
+        "test":  "emergency restore",
+        "passed":  true,
+        "detail":  "exit 0, MistFences stopped=True, icons visible=True, marker gone=True"
+    },
+    {
+        "test":  "no startup entry written",
+        "passed":  true,
+        "detail":  "HKCU Run has no MistFences entry"
+    }
+]

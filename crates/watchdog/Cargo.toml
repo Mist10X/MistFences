@@ -1,0 +1,20 @@
+[package]
+name = "pecofence-watchdog"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "MistFences watchdog: restores the Windows desktop icons if MistFences exits abnormally; --restore is the emergency way back."
+build = "build.rs"
+
+[[bin]]
+name = "mistfences-watchdog"
+path = "src/main.rs"
+
+[dependencies]
+pecofence-core = { path = "../core" }
+pecofence-platform = { path = "../platform" }
+pecofence-ipc = { path = "../ipc" }
+serde_json = { workspace = true }
+
+[lints]
+workspace = true

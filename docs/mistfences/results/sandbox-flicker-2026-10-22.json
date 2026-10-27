@@ -1,0 +1,37 @@
+﻿[
+    {
+        "test":  "first hover: no other icon blinks",
+        "passed":  true,
+        "detail":  "23 frames, other free icons worst diff 0, fence worst diff 0, bad frames 0"
+    },
+    {
+        "test":  "repeated hover",
+        "passed":  true,
+        "detail":  "23 frames, other free icons worst diff 0, fence worst diff 0, bad frames 0"
+    },
+    {
+        "test":  "after minimizing a maximized window and 5 s idle",
+        "passed":  true,
+        "detail":  "30 frames, other free icons worst diff 0, fence worst diff 0, bad frames 0"
+    },
+    {
+        "test":  "hovering again right after",
+        "passed":  true,
+        "detail":  "23 frames, other free icons worst diff 0, fence worst diff 0, bad frames 0"
+    },
+    {
+        "test":  "after minimizing a normal window and 5 s idle",
+        "passed":  true,
+        "detail":  "29 frames, other free icons worst diff 0, fence worst diff 0, bad frames 0"
+    },
+    {
+        "test":  "after Win+D and 5 s idle",
+        "passed":  true,
+        "detail":  "29 frames, other free icons worst diff 0, fence worst diff 0, bad frames 0"
+    },
+    {
+        "test":  "after Alt+Tab and minimizing, 5 s idle",
+        "passed":  true,
+        "detail":  "29 frames, other free icons worst diff 0, fence worst diff 0, bad frames 0"
+    }
+]

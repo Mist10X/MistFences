@@ -1,0 +1,82 @@
+﻿[
+    {
+        "test":  "free icons shown on the desktop",
+        "passed":  true,
+        "detail":  "alpha 13,200,88,299, beta 13,299,88,398, layer windows 1"
+    },
+    {
+        "test":  "no visible desktop group",
+        "passed":  true,
+        "detail":  "fence windows 3, regular fences 3"
+    },
+    {
+        "test":  "a free icon takes the mouse",
+        "passed":  true,
+        "detail":  "class at alpha: MistFences.DesktopLayer"
+    },
+    {
+        "test":  "drag a free icon to another place",
+        "passed":  true,
+        "detail":  "target 430,550, now at 426,546"
+    },
+    {
+        "test":  "empty desktop between icons is click-through",
+        "passed":  true,
+        "detail":  "layer 13,2,463,596, point 238,447 -\u003e Progman"
+    },
+    {
+        "test":  "desktop context menu on empty space",
+        "passed":  true,
+        "detail":  "new windows: Microsoft.UI.Content.PopupWindowSiteBridge, Microsoft.UI.Content.PopupWindowSiteBridge, XamlExplorerHostIslandWindow_WASDK"
+    },
+    {
+        "test":  "item context menu on a free icon",
+        "passed":  true,
+        "detail":  "menu open: True"
+    },
+    {
+        "test":  "double-click opens a free folder",
+        "passed":  true,
+        "detail":  "Explorer window after 437 ms"
+    },
+    {
+        "test":  "drag from a fence onto the desktop frees the icon",
+        "passed":  true,
+        "detail":  "from 1816,564 in \u0027Файлы и документы\u0027 to 126,546: fence Рабочий стол, at 126,546"
+    },
+    {
+        "test":  "drag a free icon into a fence",
+        "passed":  true,
+        "detail":  "beta now in \u0027Программы\u0027"
+    },
+    {
+        "test":  "deleting a fence frees its icons",
+        "passed":  true,
+        "detail":  "fence gone=True, beta at 1813,2,1888,101"
+    },
+    {
+        "test":  "free icon places survive a restart",
+        "passed":  true,
+        "detail":  "before: alpha.txt=388,497,463,596;beta.txt=1813,2,1888,101;deltaDir=13,398,88,497;gamma.txt=88,497,163,596;Microsoft Edge=1813,101,1888,200;Microsoft Edge=1888,2,1963,101;Дополнительные сведения об этом изображении=13,101,88,200;Корзина=13,2,88,101 / after: alpha.txt=388,497,463,596;beta.txt=1813,2,1888,101;deltaDir=13,398,88,497;gamma.txt=88,497,163,596;Microsoft Edge=1813,101,1888,200;Microsoft Edge=1888,2,1963,101;Дополнительные сведения об этом изображении=13,101,88,200;Корзина=13,2,88,101"
+    },
+    {
+        "test":  "hover opens at once",
+        "passed":  true,
+        "detail":  "roll started 15 ms after the pointer reached the title"
+    },
+    {
+        "test":  "leaving closes at once",
+        "passed":  true,
+        "detail":  "roll back started 21 ms after the pointer left"
+    },
+    {
+        "test":  "returning mid-collapse reopens it",
+        "passed":  true,
+        "detail":  "height 200 of 200"
+    },
+    {
+        "test":  "no file moved or deleted",
+        "passed":  true,
+        "detail":  "alpha.txt|beta.txt|deltaDir|gamma.txt|Microsoft Edge.lnk"
+    }
+]

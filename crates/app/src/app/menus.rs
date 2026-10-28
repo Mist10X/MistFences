@@ -189,7 +189,11 @@ impl App {
             .icon(glyph::REPAIR)
             .item(
                 CMD_FEEDBACK,
-                pecofence_core::i18n::text("发送反馈…"),
+                if pecofence_core::brand::REMOTE_SERVICES {
+                    pecofence_core::i18n::text("发送反馈…")
+                } else {
+                    pecofence_core::i18n::text("在 GitHub 上报告问题")
+                },
                 false,
                 false,
             )
@@ -227,6 +231,8 @@ impl App {
                     !pecofence_platform::shell_icons::desktop_icons_hidden(),
                 );
             }
+            // Without the upload service the form could never send anything.
+            CMD_FEEDBACK if !pecofence_core::brand::REMOTE_SERVICES => self.open_issues(),
             CMD_FEEDBACK => self.open_feedback(false),
             CMD_SETTINGS => self.queue.push(Command::OpenSettings),
             CMD_EXIT => self.queue.push(Command::Quit),

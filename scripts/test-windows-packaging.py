@@ -1,7 +1,7 @@
 """Verify packaged bytes and exercise the real installer under a unique test identity.
 
-Run after make-windows.ps1. Requires Python 3.11+ and Inno Setup 7. Never installs
-the production setup EXE or launches PecoFence. Reports/logs stay under .cache/.
+Run after scripts/mistfences/package.ps1. Requires Python 3.11+ and Inno Setup 7. Never
+installs the production setup EXE or launches MistFences. Reports/logs stay under .cache/.
 """
 import argparse
 import ctypes
@@ -24,11 +24,12 @@ ROOT = Path(__file__).resolve().parents[1]
 UNINSTALL = r"Software\Microsoft\Windows\CurrentVersion\Uninstall"
 RUN = r"Software\Microsoft\Windows\CurrentVersion\Run"
 PAYLOAD = {
-    "pecofence.exe", "pecofence-cli.exe", "pecofence-watchdog.exe",
-    "WebView2Loader.dll", "LICENSE",
+    "mistfences.exe", "mistfences-cli.exe", "mistfences-watchdog.exe",
+    "WebView2Loader.dll", "LICENSE", "NOTICE",
     "LICENSE-WebView2Loader.txt", "THIRD-PARTY-LICENSES.txt", "README.md",
-    "UPGRADING.md", "SKILL.md",
 }
+# The ZIP edition's emergency way back; the installer has a Start menu shortcut instead.
+ZIP_ONLY = {"restore-desktop.cmd"}
 HIDDEN = subprocess.STARTUPINFO()
 HIDDEN.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 HIDDEN.wShowWindow = 0
@@ -66,7 +67,7 @@ def shell_folder(csidl):
 
 
 def find_iscc(path):
-    """Resolve the compiler exactly as make-windows.ps1 does."""
+    """Resolve the compiler exactly as package.ps1 does."""
     script = str(ROOT / "scripts/find-iscc.ps1").replace("'", "''")
     argument = (path or "").replace("'", "''")
     # PowerShell 7's PSModulePath breaks module autoloading in Windows PowerShell 5.1.
@@ -81,25 +82,32 @@ def find_iscc(path):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--target-dir", type=Path, default=ROOT / "target/package")
-    parser.add_argument("--repository", default=os.getenv("GITHUB_REPOSITORY") or "DayuanJiang/PecoFence")
+    parser.add_argument("--target-dir", type=Path, default=ROOT / "target")
+    parser.add_argument("--repository", default=os.getenv("GITHUB_REPOSITORY") or "Mist10X/MistFences")
     parser.add_argument("--iscc", help="ISCC.exe; default: the ISCC variable, PATH, then common install folders")
     args = parser.parse_args()
     iscc = find_iscc(args.iscc)
     version = tomllib.loads((ROOT / "Cargo.toml").read_text(encoding="utf-8"))["workspace"]["package"]["version"]
-    base = f"pecofence-v{version}-x64"
+    base = f"MistFences-v{version}-x64"
     dist = ROOT / "dist"
-    payload = dist / ".staging" / f"{base}-installed"
+    staged = dist / base
     passed = []
 
-    for suffix in ("portable.zip", "setup.exe"):
-        asset = dist / f"{base}-{suffix}"
-        expected = f"{digest(asset.read_bytes())}  {asset.name}\n"
-        assert Path(str(asset) + ".sha256").read_text(encoding="utf-8") == expected
-    assert set(p.name for p in payload.iterdir()) == PAYLOAD
-    with zipfile.ZipFile(dist / f"{base}-portable.zip") as archive:
-        assert set(archive.namelist()) == PAYLOAD, "Unexpected files or directories in ZIP"
-        for name in ("pecofence.exe", "pecofence-cli.exe", "pecofence-watchdog.exe", "WebView2Loader.dll"):
+    for name in (f"{base}.zip", f"{base}-setup.exe"):
+        asset = dist / name
+        # Set-Content ends the line with CRLF.
+        expected = f"{digest(asset.read_bytes())}  {asset.name}"
+        assert Path(str(asset) + ".sha256").read_text(encoding="utf-8").rstrip("\r\n") == expected
+    assert set(p.name for p in staged.iterdir()) == PAYLOAD | ZIP_ONLY
+    # The installer's payload: the staged files without the ZIP-only ones.
+    payload = ROOT / ".cache" / f"payload-{uuid.uuid4().hex[:12]}"
+    payload.mkdir(parents=True)
+    for name in PAYLOAD:
+        shutil.copy2(staged / name, payload / name)
+    with zipfile.ZipFile(dist / f"{base}.zip") as archive:
+        assert set(archive.namelist()) == PAYLOAD | ZIP_ONLY, "Unexpected files or directories in ZIP"
+        assert b"mistfences-watchdog.exe\" --restore" in archive.read("restore-desktop.cmd")
+        for name in ("mistfences.exe", "mistfences-cli.exe", "mistfences-watchdog.exe", "WebView2Loader.dll"):
             portable_bytes = archive.read(name)
             assert portable_bytes == (payload / name).read_bytes(), f"Different binaries: {name}"
             source = (ROOT / "third_party/webview2/WebView2Loader.x64.dll" if name.endswith(".dll")
@@ -108,8 +116,8 @@ def main():
     passed.append("ZIP and setup payloads, identical build outputs and both checksums")
 
     identity = uuid.uuid4().hex[:12]
-    product_id = f"PecoFence.InstallerTest.{identity}"
-    product_name = f"PecoFence Installer Test {identity}"
+    product_id = f"MistFences.InstallerTest.{identity}"
+    product_name = f"MistFences Installer Test {identity}"
     uninstall_key = UNINSTALL + "\\" + product_id + "_is1"
     run_names = (product_id, product_id + ".legacy")
     stage = ROOT / ".cache" / f"installer-{identity}"
@@ -118,7 +126,10 @@ def main():
     fixture = stage / "payload"
     shutil.copytree(payload, fixture)
     report = stage / "report.json"
-    actual_startup = {name: reg_value(RUN, name) for name in ("PecoFence", "openFence")}
+    actual_startup = {name: reg_value(RUN, name) for name in ("MistFences", "MistFences.Legacy")}
+    # The test identity's data folders (DataDirName in mistfences.iss), never the real ones.
+    data_dirs = [Path(os.environ["APPDATA"]) / product_id, Path(os.environ["LOCALAPPDATA"]) / product_id]
+    assert not any(d.exists() for d in data_dirs)
     assert reg_value(uninstall_key, "InstallLocation") is None
     assert all(reg_value(RUN, name) is None for name in run_names)
     desktop_link = shell_folder(0x10) / f"{product_name}.lnk"
@@ -129,18 +140,21 @@ def main():
         run([exe, "/SP-", "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART",
              "/LANG=en", f"/LOG={stage / (name + '.log')}", *extra], success=success)
 
-    def uninstall(name):
+    def log_of(name):
+        return (stage / f"{name}.log").read_text(encoding="utf-8-sig", errors="replace")
+
+    def uninstall(name, *extra):
         location = reg_value(uninstall_key, "InstallLocation")
         if location is not None:
             exe = Path(location) / "unins000.exe"
             assert exe.is_file(), "Test uninstall entry exists but uninstaller is missing"
-            setup(exe, name)
+            setup(exe, name, *extra)
             # Inno's original uninstaller exits before its temporary child finishes.
             # Wait for our final callback, not just the launcher's process exit.
             log = stage / (name + ".log")
             deadline = time.monotonic() + 15
             while time.monotonic() < deadline:
-                if log.is_file() and "PecoFence uninstall cleanup completed" in log.read_text(encoding="utf-8-sig", errors="replace"):
+                if log.is_file() and "MistFences uninstall cleanup completed" in log.read_text(encoding="utf-8-sig", errors="replace"):
                     break
                 time.sleep(0.1)
             else:
@@ -155,7 +169,7 @@ def main():
             run([iscc, "--quiet", f"--define=PayloadDir={fixture}",
                  f"--define=AppVersion={test_version}", f"--define=Repository={args.repository}",
                  f"--define=TestIdentity={identity}", f"--output-dir={stage}",
-                 f"--output-filename=setup-{number}", ROOT / "packaging/inno/pecofence.iss"])
+                 f"--output-filename=setup-{number}", ROOT / "packaging/inno/mistfences.iss"])
             installers.append(stage / f"setup-{number}.exe")
         old, new = installers
 
@@ -176,10 +190,11 @@ def main():
         assert mutex
         try:
             setup(old, "reject-running", f"/DIR={installed}", success=False)
-            assert not (installed / "pecofence.exe").exists()
+            assert not (installed / "mistfences.exe").exists()
+            assert "would ask MistFences to quit" in log_of("reject-running")
         finally:
             kernel.CloseHandle(mutex)
-        passed.append("a running app blocks setup without forced termination")
+        passed.append("a running app is asked to quit, never killed; while it runs setup stops")
 
         setup(old, "install", f"/DIR={installed}", "/TASKS=desktopicon")
         assert Path(reg_value(uninstall_key, "InstallLocation")) == installed
@@ -187,12 +202,16 @@ def main():
         assert reg_value(uninstall_key, "URLUpdateInfo") == f"https://github.com/{args.repository}/releases"
         assert all(reg_value(RUN, name) is None for name in run_names), "Setup enabled autostart"
         assert desktop_link.is_file() and (menu_group / f"{product_name}.lnk").is_file()
+        assert (menu_group / "Restore the Windows desktop.lnk").is_file()
+        guide = (menu_group / "MistFences user guide.url").read_text(encoding="utf-8", errors="replace")
+        assert f"https://github.com/{args.repository}/blob/main/docs/mistfences/USER-GUIDE.md" in guide
+        assert not (installed / "restore-desktop.cmd").exists()
         for name in PAYLOAD:
             assert (installed / name).read_bytes() == (payload / name).read_bytes()
-        passed.append("per-user install, exact payload, shortcuts, fork links and no setup autostart")
+        passed.append("per-user install, exact payload, shortcuts (restore, guide), fork links and no setup autostart")
 
         setup(new, "reject-relocation", f"/DIR={stage / 'other install'}", success=False)
-        assert not (stage / "other install/pecofence.exe").exists()
+        assert not (stage / "other install/mistfences.exe").exists()
         passed.append("upgrade refuses to move the installation directory")
 
         retained = {}
@@ -202,11 +221,11 @@ def main():
             path.write_text("user data retained", encoding="utf-8")
             retained[path] = path.read_bytes()
         # Prove installed program files really are replaced on upgrade.
-        (installed / "pecofence-cli.exe").write_bytes(b"stale binary fixture")
+        (installed / "mistfences-cli.exe").write_bytes(b"stale binary fixture")
         setup(new, "upgrade")
         assert Path(reg_value(uninstall_key, "InstallLocation")) == installed
         assert reg_value(uninstall_key, "DisplayVersion") == "0.0.2"
-        assert (installed / "pecofence-cli.exe").read_bytes() == (payload / "pecofence-cli.exe").read_bytes()
+        assert (installed / "mistfences-cli.exe").read_bytes() == (payload / "mistfences-cli.exe").read_bytes()
         assert all(p.read_bytes() == data for p, data in retained.items())
         assert len(list(installed.glob("unins*.exe"))) == 1
         passed.append("upgrade reuses directory/uninstaller, replaces binaries and preserves added data")
@@ -217,10 +236,7 @@ def main():
 
         # The in-app updater: setup waits for the exiting app, then starts it again; a failed
         # update starts the old copy instead. Test installers only log the start.
-        def log_of(name):
-            return (stage / f"{name}.log").read_text(encoding="utf-8-sig", errors="replace")
-
-        start_line = f"would start {installed / 'pecofence.exe'}"
+        start_line = f"would start {installed / 'mistfences.exe'}"
         assert "would start" not in log_of("upgrade"), "a plain silent upgrade started the app"
         exiting = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(3)"],
                                    startupinfo=HIDDEN)
@@ -234,14 +250,19 @@ def main():
         assert start_line in log_of("update-refused")
         passed.append("an update waits for the app, then restarts it once; a failed one restarts the old copy")
 
-        other_command = f'"{stage / "another copy/pecofence.exe"}"'
+        other_command = f'"{stage / "another copy/mistfences.exe"}"'
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, RUN) as key:
-            winreg.SetValueEx(key, run_names[0], 0, winreg.REG_SZ, f'"{installed / "pecofence.exe"}"')
+            # Its own entry with an argument (a portable start) is still its own.
+            winreg.SetValueEx(key, run_names[0], 0, winreg.REG_SZ, f'"{installed / "mistfences.exe"}" --portable')
             winreg.SetValueEx(key, run_names[1], 0, winreg.REG_SZ, other_command)
+        for d in data_dirs:
+            d.mkdir(parents=True)
+            (d / "config.json").write_text("{}", encoding="utf-8")
         uninstall("uninstall")
         assert not any((installed / name).exists() for name in PAYLOAD)
         assert not desktop_link.exists() and not menu_group.exists()
         assert all(p.read_bytes() == data for p, data in retained.items())
+        assert all((d / "config.json").is_file() for d in data_dirs), "a silent uninstall removed settings"
         assert reg_value(RUN, run_names[0]) is None
         assert reg_value(RUN, run_names[1]) == other_command
         passed.append("uninstall removes managed files/shortcuts, keeps data and another copy's startup entry")
@@ -249,12 +270,12 @@ def main():
         # A folder an older ZIP was extracted into (the default directory, for some users).
         extracted = stage / "extracted zip"
         extracted.mkdir()
-        (extracted / "pecofence.exe").write_bytes(b"older ZIP build fixture")
+        (extracted / "mistfences.exe").write_bytes(b"older ZIP build fixture")
         (extracted / "config").mkdir()
         (extracted / "config/config.json").write_text("portable config", encoding="utf-8")
         setup(new, "adopt-zip-folder", f"/DIR={extracted}")
         assert Path(reg_value(uninstall_key, "InstallLocation")) == extracted
-        assert (extracted / "pecofence.exe").read_bytes() == (payload / "pecofence.exe").read_bytes()
+        assert (extracted / "mistfences.exe").read_bytes() == (payload / "mistfences.exe").read_bytes()
         assert (extracted / "config/config.json").read_text(encoding="utf-8") == "portable config"
         passed.append("a folder holding an extracted ZIP is upgraded in place and keeps its files")
 
@@ -263,14 +284,20 @@ def main():
         relocated = stage / "new location"
         setup(new, "reinstall-after-deleted-folder", f"/DIR={relocated}")
         assert Path(reg_value(uninstall_key, "InstallLocation")) == relocated
-        uninstall("uninstall-reinstalled")
-        assert not (relocated / "pecofence.exe").exists()
+        (relocated / "config").mkdir()
+        (relocated / "config/config.json").write_text("portable config", encoding="utf-8")
+        uninstall("uninstall-reinstalled", "/REMOVEDATA=1")
+        assert not (relocated / "mistfences.exe").exists()
+        assert not any(d.exists() for d in data_dirs) and not (relocated / "config").exists()
         passed.append("a registration whose folder was deleted does not block a new location")
+        passed.append("/REMOVEDATA=1 removes the settings, logs and a portable config")
     finally:
         # The only persistent writes outside .cache belong to this generated test ID.
         try:
             uninstall("cleanup")
         finally:
+            for d in data_dirs:
+                shutil.rmtree(d, ignore_errors=True)
             with winreg.CreateKey(winreg.HKEY_CURRENT_USER, RUN) as key:
                 for name in run_names:
                     try:

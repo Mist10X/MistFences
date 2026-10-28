@@ -39,6 +39,8 @@ const fixture = {
   monitors: [{ id: 'one', label: 'Display 1' }, { id: 'two', label: 'Display 2' }],
   desktopIconsHidden: false,
   version: 'test', configPath: 'C:\\PecoFence\\config.json', memoryMb: 28, itemCount: 12,
+  // The upstream build with its feedback service; MistFences sends false (see the test below).
+  feedbackUpload: true,
   themeMode: 'dark', accent: '#60CDFF',
   customThemes: ['Frosted Glass', 'Warm'], customThemeError: null, styleInUse: 'fluent',
   peekHotkey: {
@@ -777,6 +779,20 @@ async function runTests() {
     manual.click(); rate.click(); star.click(); await settle();
     assert(actions().slice(-3).join() === 'openManual,rateInStore,openRepository', 'About buttons did not post their actions');
     current().storeEdition = false;
+    frame.contentWindow.testRefresh();
+  });
+  await test('Without the feedback service the form gives way to a link to the issue tracker', async () => {
+    doc.querySelector('[data-page=about]').click();
+    const form = doc.getElementById('fbForm'), card = doc.getElementById('issueCard');
+    assert(!form.hidden && card.hidden, 'Issue card shown although feedback can be sent');
+    current().feedbackUpload = false;
+    frame.contentWindow.testRefresh(); await settle();
+    assert(form.hidden && form.offsetHeight === 0, 'Feedback form shown without a service to send to');
+    assert(!card.hidden && card.offsetWidth > 0, 'Issue card missing');
+    doc.getElementById('reportIssue').click(); await settle();
+    const actions = frame.contentWindow.testMessages.filter(m => m.type === 'action').map(m => m.name);
+    assert(actions.at(-1) === 'openIssues', 'Report button did not post openIssues');
+    current().feedbackUpload = true;
     frame.contentWindow.testRefresh();
   });
   await test('Desktop icons can be restored, hidden again, and restored repeatedly', async () => {

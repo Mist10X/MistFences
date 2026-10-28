@@ -131,6 +131,12 @@ impl App {
         self.feedback.crash_offer_pending = false;
     }
 
+    /// MistFences' issue tracker: where feedback goes without the upload service.
+    pub(super) fn open_issues(&self) {
+        let url = format!("{}/issues", pecofence_core::brand::REPOSITORY_URL);
+        let _ = shell::shell_execute(Path::new(&url), None, None);
+    }
+
     /// Opens the settings window at the 「反馈」 form (on 「关于」); `crash` says it reports the last crash.
     pub(super) fn open_feedback(&mut self, crash: bool) {
         self.open_settings();

@@ -33,7 +33,10 @@ if (-not $VcVars) { throw 'vcvars64.bat not found: pass -VcVars <path>' }
 $cargo = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe'
 if (-not (Test-Path $cargo)) { $cargo = 'cargo' }
 $profileArgs = if ($Release) { '--release' } else { '' }
-$command = "call `"$VcVars`" >nul 2>nul && cd /d `"$repo`" && `"$cargo`" build --locked $profileArgs"
+# Two builds: built together, Cargo would enable the CLI's `describe` feature (JSON Schema
+# export through schemars) in the crates the app shares with it, and link it into the app.
+$build = "`"$cargo`" build --locked $profileArgs"
+$command = "call `"$VcVars`" >nul 2>nul && cd /d `"$repo`" && $build -p pecofence -p pecofence-watchdog && $build -p pecofence-cli"
 # Cargo reports progress on stderr: not an error for PowerShell.
 $ErrorActionPreference = 'Continue'
 cmd /c "$command 2>&1"

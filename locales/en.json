@@ -501,6 +501,8 @@
   "说说遇到了什么情况，或者希望怎么改进": "Describe what happened, or how you'd like it to improve",
   "发送": "Send",
   "发送反馈…": "Send feedback…",
+  "在 GitHub 上报告问题": "Report a problem on GitHub",
+  "MistFences 不会自动发送任何数据。需要附上日志时，可在 %LOCALAPPDATA%\\MistFences 找到。": "MistFences never sends anything by itself. If a log helps, you find it in %LOCALAPPDATA%\\MistFences.",
   "发送失败（{0}），请稍后重试": "Sending failed ({0}). Please try again later.",
   "发送太频繁，请过几分钟再试": "Too many reports in a short time. Please try again in a few minutes.",
   "已发送，感谢反馈！": "Sent. Thanks for your feedback!",

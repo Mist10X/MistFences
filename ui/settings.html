@@ -529,6 +529,9 @@
       <div class="card"><div class="l"><span class="ic">&#xE734;</span><div><div class="t">喜欢 PecoFence 吗？</div><div class="s">你的支持能让更多人发现它。</div></div></div>
         <div class="actions"><button id="rateStore" hidden>在 Microsoft Store 评分</button><button id="starRepo">在 GitHub 点 Star</button></div></div>
       <h3 id="feedbackHeading">反馈</h3>
+      <!-- Builds without the feedback service (MistFences) show this card instead of the form. -->
+      <div class="card" id="issueCard" hidden><div class="l"><span class="ic">&#xED15;</span><div><div class="t">在 GitHub 上报告问题</div><div class="s">MistFences 不会自动发送任何数据。需要附上日志时，可在 %LOCALAPPDATA%\MistFences 找到。</div></div></div><button id="reportIssue">打开</button></div>
+      <div id="fbForm">
       <p class="page-lede">遇到问题或有什么想法，写在这里发给开发者，每条都会看。</p>
       <div class="fb-note" id="fbCrashNote" role="note" hidden><span class="ic">&#xE7BA;</span><span>PecoFence 上次意外关闭了，那次的日志会一起发送。如果还记得当时在做什么，请写在下面。</span></div>
       <div class="card stack fb-form">
@@ -549,6 +552,7 @@
       </details>
       <div class="fb-foot"><div class="s">反馈只会发给 PecoFence 开发者。</div>
         <button type="button" class="accent" id="fbSend"><span class="idle">发送</span><span class="busy">正在发送…</span></button></div>
+      </div>
       <h3>疑难解答</h3>
       <div class="card"><div class="l"><span class="ic">&#xE90F;</span><div><div class="t">Windows 桌面图标</div><div class="s" id="desktopIconsStatus"></div></div></div>
         <div class="actions"><button id="repairIcons">恢复显示桌面图标</button><button id="hideIconsAgain">重新隐藏桌面图标</button></div></div>
@@ -1227,6 +1231,7 @@
   document.getElementById('rateStore').onclick = () => send({ type: 'action', name: 'rateInStore' });
   document.getElementById('starRepo').onclick = () => send({ type: 'action', name: 'openRepository' });
   document.getElementById('openManual').onclick = () => send({ type: 'action', name: 'openManual' });
+  document.getElementById('reportIssue').onclick = () => send({ type: 'action', name: 'openIssues' });
   document.getElementById('openThemes').onclick = () => send({ type: 'action', name: 'openThemesFolder' });
   document.getElementById('themeGuide').onclick = () => send({ type: 'action', name: 'openThemeGuide' });
   document.getElementById('repairIcons').onclick = () => send({ type: 'action', name: 'repairIcons' });
@@ -1365,6 +1370,9 @@
       document.getElementById('ver').textContent = 'v' + m.version;
       // Only the Store edition has the Store's rating dialog.
       document.getElementById('rateStore').hidden = !m.storeEdition;
+      // Without the feedback service the form could never send: a link to the issue tracker.
+      document.getElementById('fbForm').hidden = !m.feedbackUpload;
+      document.getElementById('issueCard').hidden = !!m.feedbackUpload;
       renderWorkspaceSummary(m.fences.length, m.itemCount);
       document.getElementById('cfgPath').textContent = m.configPath;
       bindAll(); bindThemeStyle(); bindCustomTheme(); bindIconTint(); renderDependents(); renderFences(); renderRules(); renderLayout(); updateKind(); renderAppearance(); renderDesktopIconsStatus();

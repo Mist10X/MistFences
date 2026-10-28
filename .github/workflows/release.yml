@@ -1,0 +1,63 @@
+# Builds the MistFences setup program and ZIP on Windows. A pushed tag v<version> (matching
+# Cargo.toml) publishes them as a GitHub release; a manual run only keeps them as artifacts.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the tag against Cargo.toml
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"' | Select-Object -First 1).Matches[0].Groups[1].Value
+          if ("$env:GITHUB_REF_NAME" -cne "v$version") { throw "Tag $env:GITHUB_REF_NAME does not match Cargo.toml version $version" }
+
+      - name: Rust toolchain (rust-toolchain.toml)
+        shell: pwsh
+        # The first cargo call installs the toolchain the file names.
+        run: cargo --version
+
+      - name: Inno Setup 7 (pinned, hash-checked)
+        shell: pwsh
+        run: ./scripts/setup-inno-ci.ps1
+
+      - name: Unit tests (platform-independent crates)
+        shell: pwsh
+        run: cargo test --locked -p pecofence-core -p pecofence-ipc
+
+      - name: Settings page translations
+        shell: pwsh
+        run: python scripts/check-locales.py
+
+      - name: Build and package
+        shell: pwsh
+        run: ./scripts/mistfences/package.ps1 -Format All
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MistFences-${{ github.ref_name }}
+          path: |
+            dist/MistFences-*.zip
+            dist/MistFences-*-setup.exe
+            dist/*.sha256
+          if-no-files-found: error
+
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $assets = Get-ChildItem dist -File | Where-Object { $_.Name -like 'MistFences-*' } | ForEach-Object FullName
+          gh release create "$env:GITHUB_REF_NAME" @assets --title "MistFences $env:GITHUB_REF_NAME" --generate-notes

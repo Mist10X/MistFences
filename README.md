@@ -9,14 +9,21 @@ Windows 11.
 
 ## Скачать
 
-Готовая сборка — на странице [Releases](../../releases): архив
-`MistFences-v<версия>-x64.zip`. Распакуйте его в постоянную папку и запустите
-`mistfences.exe`. Подробности — в `README.md` внутри архива
-([docs/mistfences/USER-GUIDE.md](docs/mistfences/USER-GUIDE.md)).
+Готовые сборки — на странице [Releases](../../releases):
 
-Нужна Windows 11 или Windows 10 22H2 (x64) и Microsoft Edge WebView2 Runtime. Программа не
-подписана: если SmartScreen предупредит, нажмите «Подробнее» → «Выполнить в любом случае».
-Перед запуском закройте Stardock Fences, если он работает.
+- **`MistFences-v<версия>-x64-setup.exe` — установщик** (рекомендуется): ставится для текущего
+  пользователя без прав администратора, создаёт ярлыки в «Пуске» (в том числе «Восстановить
+  рабочий стол Windows»), при необходимости скачивает WebView2 Runtime, сам закрывает
+  работающую копию при обновлении и удаляется через «Установленные приложения»;
+- `MistFences-v<версия>-x64.zip` — портативная версия: распакуйте в постоянную папку и
+  запустите `mistfences.exe`.
+
+**Руководство пользователя: [docs/mistfences/USER-GUIDE.md](docs/mistfences/USER-GUIDE.md)**
+(оно же лежит рядом с программой как `README.md`).
+
+Нужна Windows 11 или Windows 10 22H2 (x64); окну настроек нужен Microsoft Edge WebView2
+Runtime. Программа не подписана: если SmartScreen предупредит, нажмите «Подробнее» →
+«Выполнить в любом случае». Перед запуском закройте Stardock Fences, если он работает.
 
 ## Что умеет
 
@@ -36,13 +43,21 @@ Windows 11.
 
 ## Сборка из исходников
 
-Нужны Rust (MSVC, версия из `rust-toolchain.toml`) и Visual Studio Build Tools с Windows SDK.
+Нужны Rust (MSVC, версия из `rust-toolchain.toml`) и Visual Studio Build Tools с Windows SDK;
+для установщика — [Inno Setup 7](https://jrsoftware.org/isdl.php).
 
 ```powershell
 ./scripts/mistfences/build.ps1 -Release      # target\release
-./scripts/mistfences/package.ps1             # dist\MistFences-v<версия>-x64.zip
+./scripts/mistfences/package.ps1             # dist\MistFences-v<версия>-x64-setup.exe и .zip
 cargo test --workspace
+python scripts/test-windows-packaging.py     # установка, обновление и удаление под тестовым именем
 ```
+
+`package.ps1 -Format Zip` собирает только архив, `-Format Installer` — только установщик,
+`-Iscc <путь к ISCC.exe>` указывает компилятор Inno Setup. Сценарий установщика —
+[packaging/inno/mistfences.iss](packaging/inno/mistfences.iss). Тег `v<версия>` запускает
+[сборку релиза](.github/workflows/release.yml) на GitHub Actions: установщик и ZIP
+публикуются на странице Releases.
 
 Тесты поведения на чистой Windows запускаются в Windows Sandbox:
 `scripts/mistfences/sandbox/run-sandbox-tests.ps1 -AppDir <папка сборки> -Script <скрипт>`
@@ -72,12 +87,14 @@ Delete / F2 / Ctrl+C / X / V / A, drops onto folders through the Windows file op
 and a right-button rectangle that offers a new fence (as in Fences). PecoFence's network
 services (update check, feedback upload, Store rating) are switched off.
 
-Download the ZIP from [Releases](../../releases), extract it to a permanent folder and run
-`mistfences.exe` (Windows 11 or Windows 10 22H2 x64, WebView2 Runtime). The program is not
-code-signed; SmartScreen may ask for confirmation. Close Stardock Fences first if it runs.
-Exit from the tray menu gives Windows its desktop icons back.
+Download `MistFences-v<version>-x64-setup.exe` (per-user setup, no administrator rights) or
+the portable ZIP from [Releases](../../releases) (Windows 11 or Windows 10 22H2 x64,
+WebView2 Runtime for Settings). The program is not code-signed; SmartScreen may ask for
+confirmation. Close Stardock Fences first if it runs. Exit from the tray menu gives Windows
+its desktop icons back. See the [user guide](docs/mistfences/USER-GUIDE.md#english).
 
-Build: `./scripts/mistfences/build.ps1 -Release`, package:
-`./scripts/mistfences/package.ps1`, tests: `cargo test --workspace`.
+Build: `./scripts/mistfences/build.ps1 -Release`, package (setup + ZIP, Inno Setup 7):
+`./scripts/mistfences/package.ps1`, tests: `cargo test --workspace` and
+`python scripts/test-windows-packaging.py`.
 
 Not affiliated with Stardock; Fences is a trademark of Stardock Corporation.

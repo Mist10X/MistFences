@@ -1,8 +1,6 @@
-# Compatibility entry point; both formats share make-windows.ps1.
+# Compatibility entry point: the ZIP alone (scripts/mistfences/package.ps1 -Format Zip).
 param(
   [string]$Version = "",
-  [string]$TargetDir = "target/package",
-  [string]$Python = "python",
   [string]$Repository = "",
   [switch]$SkipBuild
 )

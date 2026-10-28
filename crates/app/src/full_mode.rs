@@ -97,7 +97,8 @@ pub fn fences_allow_start() -> bool {
         &format!(
             "Stardock Fences сейчас управляет рабочим столом:\n\n{}\n\n\
              MistFences не запускается вместе с ним, чтобы две программы не скрывали и не \
-             рисовали одни и те же значки. Сначала отключите Fences (см. docs\\mistfences\\SWITCH.md).",
+             рисовали одни и те же значки. Сначала закройте или удалите Fences (раздел «Переход со \
+             Stardock Fences» в README.md рядом с программой).",
             lines.join("\n")
         ),
         "MistFences",

@@ -501,6 +501,8 @@
   "说说遇到了什么情况，或者希望怎么改进": "Cuenta qué ocurrió o cómo te gustaría que mejorara",
   "发送": "Enviar",
   "发送反馈…": "Enviar comentarios…",
+  "在 GitHub 上报告问题": "Informar de un problema en GitHub",
+  "MistFences 不会自动发送任何数据。需要附上日志时，可在 %LOCALAPPDATA%\\MistFences 找到。": "MistFences nunca envía nada por sí solo. Si un registro ayuda, está en %LOCALAPPDATA%\\MistFences.",
   "发送失败（{0}），请稍后重试": "No se pudo enviar ({0}). Inténtalo de nuevo más tarde.",
   "发送太频繁，请过几分钟再试": "Demasiados envíos en poco tiempo. Inténtalo de nuevo en unos minutos.",
   "已发送，感谢反馈！": "Enviado. ¡Gracias por tus comentarios!",

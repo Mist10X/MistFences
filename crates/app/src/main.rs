@@ -310,9 +310,10 @@ fn main() -> Result<()> {
     let [current_name, legacy_name] =
         pecofence_core::brand::instance_mutex_names(instance_name.as_deref());
     let Some(_instance) = window::SingleInstance::acquire(&current_name) else {
-        // Started again from the Start menu or a shortcut: Windows 11 hides new tray icons
-        // in the overflow, so show the running copy's settings rather than exit silently.
-        if std::env::args().len() == 1 {
+        // Started again from the Start menu or a shortcut (a portable copy's carries
+        // --portable): Windows 11 hides new tray icons in the overflow, so show the running
+        // copy's settings rather than exit silently.
+        if std::env::args().skip(1).all(|a| a == "--portable") {
             show_running_settings(instance.as_deref());
         }
         return Ok(());
